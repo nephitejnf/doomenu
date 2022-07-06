@@ -1,0 +1,186 @@
+#!/bin/sh
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#                    Version 2, December 2004
+#
+# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+#
+# Everyone is permitted to copy and distribute verbatim or modified
+# copies of this license document, and changing it is allowed as long
+# as the name is changed.
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+#
+#  0. You just DO WHAT THE FUCK YOU WANT TO.
+
+
+
+neutral_background="#02280f"
+neutral_font_color="#911c14"
+selected_background="#b22318"
+fontface="TerminessTTF Nerd Font:style=Bold:size=16"
+theming="-nb '${neutral_background}' -nf '${neutral_font_color}' -sb '${selected_background}' -fn '${fontface}'" 
+## End of themeing
+
+MENU_CMD="dmenu ${theming} -i -p"
+echo $MENU_CMD
+PWAD_START=1
+IWAD_DIR="${HOME}/.config/doomenu/iwads/"
+PWAD_DIR="${HOME}/.config/doomenu/pwads/"
+
+## TODO
+# Other source port detection
+# qzdoom, zdoom
+###
+# Handling for chocolate/crispy derivatives
+# Chocolate Doom/Heretic/Hexen/Strife/Chex
+# Crispy Doom
+SOURCE_PORTS=("gzdoom" "qzdoom" "zdoom" "prboom" "prboom-plus" "chocolate-doom" "crispy-doom" "zandronum")
+SOURCE_PORT=""
+SKIP_RUN=0
+
+#IWAD=$(echo -e "Cancel\n$(ls ${IWAD_DIR})" | dmenu -nb "${neutral_background}" -nf "${neutral_font_color}" -sb "${selected_background}" -fn "${fontface}" -i -p "Select IWAD")
+IWAD=""
+PWAD=("")
+
+SelectPwad () {
+    d=0
+    i=0
+    
+    while [ $d -lt 1 ]
+    do
+        PWADI=$(echo -e "Done\nCancel\n$(ls ${PWAD_DIR})" | ${MENU_CMD} "Select PWAD (Done to finish, Cancel to Abort)")
+        if [ $PWADI == "Done" ]; then
+            echo "Done"
+            d=1
+        elif [ $PWADI == "Cancel" ]; then
+            echo "Cancel"
+            break
+        else
+            PWAD[$i]="${PWADI}"
+            i=`expr 1 + $i`
+        fi
+    done
+    
+    PWADS=""
+    for p in "${PWAD[@]}"; do
+        PWADS="${PWADS} -file ${PWAD_DIR}$p"
+    done
+    echo $PWADS
+    ${SOURCE_PORT} -iwad ${IWAD_DIR}${IWAD} ${PWADS}
+}
+
+for arg in "$@"; do
+    case $arg in
+        "gzdoom") SOURCE_PORT="gzdoom";;
+        "qzdoom") SOURCE_PORT="qzdoom";;
+        "zdoom") SOURCE_PORT="zdoom";;
+        "zandronum") SOURCE_PORT="zandronum";;
+        "crispy") SOURCE_PORT="crispy-doom";;
+        "chocolate") SOURCE_PORT="chocolate";;
+        "prboom") SOURCE_PORT="prboom";;
+        "prboom-plus") SOURCE_PORT="prboom-plus";;
+        "nopwad") PWAD_START=0;;
+        "freedoom1") IWAD="freedoom1.wad";;
+        "freedoom2") IWAD="freedoom2.wad";;
+        "freedm") IWAD="freedm.wad";;
+        "doom") IWAD="DOOM.WAD";;
+        "doom2") IWAD="DOOM2.WAD";;
+        "tnt"|"evilution") IWAD="tnt.wad";;
+        "plutonia") IWAD="plutonia.wad";;
+        "strife") IWAD="strife1.wad";;
+        "strifeve") IWAD="SVE.wad";;
+        "heretic") IWAD="HERETIC.WAD";;
+        "hexen") IWAD="HEXEN.WAD";;
+        "hexdd") IWAD="HEXDD.WAD";;
+        "chex3") IWAD="chex3.wad";;
+        "chex2") IWAD="CHEX2.WAD";;
+        "chex") IWAD="chex.wad";;
+        "hacx") IWAD="hacx.wad";;
+        "harmony") IWAD="harm1.wad";;
+        "rekkr") IWAD="rekkrsa.wad";;
+        "help")
+            echo "usage: doomenu [SOURCE_PORT] [IWAD] [nopwad]"
+            echo "Options:"
+            echo ""
+            echo "SOURCE_PORT options:"
+            echo "  prboom, prboom-plus                         PRBoom ports"
+            echo "  gzdoom, qzdoom, zdoom                       ZDoom ports"
+            echo "  chocolate                                   Chocolate ports"
+            echo "  crispy                                      Crispy Doom port"
+            echo ""
+            echo "IWAD options:"
+            echo "  doom, doom2, tnt, evilution, plutonia       Doom (1, 2, Evilution, Project Plutonia)"
+            echo "  strife, strifeve                            Strife (Demo, Veteran's Edition)"
+            echo "  heretic                                     Heretic"
+            echo "  freedoom1, freedoom2, freedm                Freedoom (Phase 1, 2, Deathmatch)"
+            echo "  hexen, hexdd                                Hexen"
+            echo "  chex3                                       Chex Quest"
+            echo "  hacx"
+            echo "  harmony"
+            echo ""
+            echo "Misc Options:"
+            echo "  nopwad                                      Skip PWAD select"
+            echo "  help                                        Show this stuff"
+            SKIP_RUN=1
+            PWAD_START=0
+            ;;
+        *) echo "No option for $arg";;
+    esac
+done
+
+if [ "$SOURCE_PORT" == "" ] && [ $SKIP_RUN -lt 1 ]; then
+    PORT_LIST=""
+    for port in "${SOURCE_PORTS[@]}"; do
+        case $port in
+            "gzdoom") [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\ngzdoom";;
+            "qzdoom")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nqzdoom";;
+            "zdoom")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nzdoom";;
+            "prboom")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nprboom";;
+            "prboom-plus")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nprboom-plus";;
+            "zandronum")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nzandronum";;
+            "chocolate-doom")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\nchocolate";;
+            "crispy-doom")  [ -x "$(command -v ${port})" ] && PORT_LIST="${PORT_LIST}\ncrispy-doom";;
+            *) echo -e "Nothing";;
+        esac
+    done
+    SOURCE_PORT=$(echo -e "$PORT_LIST" | ${MENU_CMD} "Which source port?" -l 6)
+fi
+
+[ "$IWAD" == "" ] && IWAD=$(echo -e "Cancel\n$(ls ${IWAD_DIR})" | ${MENU_CMD} "Select IWAD")
+
+if [ "$SOURCE_PORT" != "" ]; then
+    if [ "$SOURCE_PORT" == "chocolate" ]; then
+        case $IWAD in
+            "DOOM.WAD"|"DOOM2.WAD"|"DOOMGBA.WAD"|"freedoom1.wad"|"freedoom2.wad"|"freedm.wad"|"HACX.WAD"|"rekkrsa.wad") SOURCE_PORT="chocolate-doom";;
+            "strife1.wad"|"SVE.wad") SOURCE_PORT="chocolate-strife";;
+            "HERETIC.WAD"|"BLASPHEM.WAD"|"blasphem.wad") SOURCE_PORT="chocolate-heretic";;
+            "HEXEN.WAD"|"HEXDD.WAD") SOURCE_PORT="chocolate-hexen";;
+            *) SKIP_RUN=1 && notify-send "Invalid WAD for chocolate ports";;
+        esac
+    elif [ "$SOURCE_PORT" == "crispy-doom" ]; then
+        case $IWAD in
+            "DOOM.WAD"|"DOOM2.WAD"|"DOOMGBA.WAD"|"freedoom1.wad"|"freedoom2.wad"|"freedm.wad"|"HACX.WAD"|"rekkrsa.wad") SOURCE_PORT="crispy-doom";;
+            "HERETIC.WAD"|"BLASPHEM.WAD"|"blasphem.wad") SOURCE_PORT="crispy-heretic";;
+            "HEXEN.WAD"|"HEXDD.WAD") SOURCE_PORT="crispy-hexen";;
+            *) SKIP_RUN=1 && notify-send "Invalid WAD for crispy experience";;
+        esac
+    elif [ "$SOURCE_PORT" == "prboom"] || [ "$SOURCE_PORT" == "prboom-plus" ]; then
+        case $IWAD in
+            "DOOM.WAD"|"DOOM2.WAD"|"DOOMGBA.WAD"|"freedoom1.wad"|"freedoom2.wad"|"freedm.wad"|"HACX.WAD"|"rekkrsa.wad") echo "Okay WAD for Crispiness";;
+            *) SKIP_RUN=1 && notify-send "Invalid WAD for prboom experience";;
+        esac
+    fi
+fi
+
+if [ "$IWAD" != "Cancel" ] && [ "$IWAD" != "" ]; then
+    [ "$PWAD_START" != 0 ] && PWAD_CONFIRM=$(echo -e "Yes\nNo" | ${MENU_CMD} "Use PWADs?" -l 2)
+    
+    if [ "$PWAD_CONFIRM" == "Yes" ]; then
+        SelectPwad
+    elif [ "$PWAD_CONFIRM" == "No" ] || [ $PWAD_START == 0 ]; then
+        [ $SKIP_RUN -lt 1 ] && ${SOURCE_PORT} -iwad ${IWAD_DIR}${IWAD}
+    fi
+fi
+
